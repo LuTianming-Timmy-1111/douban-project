@@ -15,3 +15,9 @@
 2. 启动数据库：`docker-compose up -d db`
 3. 运行爬虫：`docker-compose up spider`
 4. 拆表：`./run_split.sh`
+
+## 数据表
+
+- `movie`：爬虫写入的原始宽表
+- `movie_new`、`genre`、`country`：电影、类型、国家
+- `movie_genre`、`movie_country`：多对多中间表
