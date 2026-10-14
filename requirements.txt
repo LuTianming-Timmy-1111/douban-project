@@ -1,0 +1,4 @@
+requests
+beautifulsoup4==4.11.2
+pymysql
+cryptography
