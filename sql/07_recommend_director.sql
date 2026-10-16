@@ -14,7 +14,7 @@ country_cnt AS (
     GROUP BY country_id
 ),
 target AS (
-    SELECT id FROM movie_new WHERE title = '千与千寻'
+    SELECT id, year FROM movie_new WHERE title = '千与千寻'
 ),
 g AS (
     SELECT b.movie_id, SUM(1 / gc.movie_count) AS g_score
@@ -39,15 +39,25 @@ c AS (
     JOIN movie_country b  ON a.country_id = b.country_id AND b.movie_id <> a.movie_id
     JOIN country_cnt cc   ON cc.country_id = a.country_id
     GROUP BY b.movie_id
+),
+scored AS (
+    SELECT m.title, m.rating,
+           COALESCE(g.g_score, 0) AS gs,
+           COALESCE(d.d_score, 0) AS ds,
+           COALESCE(c.c_score, 0) AS cs,
+           COALESCE(1 / (1 + ABS(m.year - t.year)) *0.005, 0) AS ys
+    FROM movie_new m
+    CROSS JOIN target t
+    LEFT JOIN g ON g.movie_id = m.id
+    LEFT JOIN d ON d.movie_id = m.id
+    LEFT JOIN c ON c.movie_id = m.id
+    WHERE (g.movie_id IS NOT NULL OR d.movie_id IS NOT NULL OR c.movie_id IS NOT NULL) AND m.id <> t.id
 )
-SELECT m.title, m.rating,
-       ROUND(COALESCE(g.g_score, 0), 4) AS 类型分,
-       ROUND(COALESCE(d.d_score, 0), 4) AS 导演分,
-       ROUND(COALESCE(c.c_score, 0), 4) AS 国家分
-FROM movie_new m
-LEFT JOIN g ON g.movie_id = m.id
-LEFT JOIN d ON d.movie_id = m.id
-LEFT JOIN c ON c.movie_id = m.id
-WHERE g.movie_id IS NOT NULL OR d.movie_id IS NOT NULL
-ORDER BY 类型分 + 导演分 + 国家分 DESC, m.rating DESC
+SELECT title, rating,
+       ROUND(gs, 4) AS 类型分,
+       ROUND(ds, 4) AS 导演分,
+       ROUND(cs, 4) AS 国家分,
+       ROUND(ys, 4) AS 年份分
+FROM scored
+ORDER BY gs + ds + cs + ys DESC, rating DESC
 LIMIT 15;
