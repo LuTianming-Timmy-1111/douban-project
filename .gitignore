@@ -2,3 +2,4 @@
 test_parse.py
 *.swp
 __pycache__/
+test_director.py
