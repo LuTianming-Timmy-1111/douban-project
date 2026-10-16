@@ -8,7 +8,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 }
 
-# ===== 连接数据库、建表（表结构升级为5个字段）=====
+# ===== 连接数据库、建表（片名、评分、年份、国家、类型、导演）=====
 for i in range(10):
     try:
         conn = pymysql.connect(
@@ -35,7 +35,8 @@ cursor.execute("""
         rating DECIMAL(3,1),
         year VARCHAR(10),
         country VARCHAR(100),
-        genre VARCHAR(100)
+        genre VARCHAR(100), 
+        director VARCHAR(500)
     )
 """)
 
@@ -52,14 +53,20 @@ for start in range(0, 250, 25):
         title = item.find('span', class_='title').text
         rating = item.find('span', class_='rating_num').text
 
-        # 解析 bd 文本，切出 年份/国家/类型
+        # 解析 bd 文本：第 0 行取导演，第 1 行取 年份/国家/类型
         bd = item.find('div', class_='bd').find('p').text
         bd = bd.replace('\xa0', ' ')
         lines = [line.strip() for line in bd.split('\n') if line.strip()]
+        names = lines[0].split('  ')[0].split(':')[1]
+        if '...' in names:
+            print('⚠ 导演可能被截断：', title, repr(lines[0]))
+        directors = [d.replace('...', '').strip() for d in names.split('/') if d.strip()]
+        director = ' / '.join(directors)
         info_line = lines[1]
         parts = info_line.split('/')
 
-        # 健壮性处理：不够3块就填默认值，避免越界报错
+        # 国家、类型从后往前取：多次上映的电影前面会有多个年份，从前往后取会错位
+        # 不足 3 段时宁可留空，也不猜
         year = parts[0].strip()[:4] if len(parts) > 0 else ''
         country = parts[-2].strip() if len(parts) > 2 else ''
         genre = parts[-1].strip() if len(parts) > 2 else ''
@@ -67,12 +74,11 @@ for start in range(0, 250, 25):
         if len(parts) < 3:
             print('⚠ 格式异常，已留空：', title, repr(info_line))
         
-        # 插入5个字段
         cursor.execute(
-            "INSERT INTO movie (title, rating, year, country, genre) VALUES (%s, %s, %s, %s, %s)",
-            (title, rating, year, country, genre)
+            "INSERT INTO movie (title, rating, year, country, genre, director) VALUES (%s, %s, %s, %s, %s, %s)",
+            (title, rating, year, country, genre, director)
         )
-        print(title, rating, year, country, genre)
+        print(title, rating, year, country, genre, director)
 
     time.sleep(2)
 
