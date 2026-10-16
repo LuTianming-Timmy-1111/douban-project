@@ -4,11 +4,13 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: douban
     command: --default-authentication-plugin=mysql_native_password
     ports: 
       - "3307:3306"
     volumes:
       - db-data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
 
   spider:
     build: .
