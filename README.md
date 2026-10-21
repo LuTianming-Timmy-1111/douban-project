@@ -27,14 +27,14 @@ cd douban-project
 cp .env.example .env
 vi .env
 
-# 2. 启动数据库（首次启动会自动建库、建表）
-docker-compose up -d db
+# 2. 一条命令跑完：启动数据库 → 爬取 → 拆表 → 检查
+./run_all.sh
 
-# 3. 运行爬虫，写入原始表 movie
-docker-compose up spider
-
-# 4. 拆分为规范化的表
-./run_split.sh
+# 也可以分步执行（比如只想重新拆表，不想重爬）：
+docker-compose up -d db          # 启动数据库（首次启动会自动建库、建表）
+docker-compose run --rm spider   # 爬取，写入原始表 movie
+./run_split.sh                   # 拆分为规范化的表
+./run_check.sh                   # 数据质量检查，全部通过返回 0
 ```
 
 数据库映射在宿主机 **3307** 端口，可用 Navicat 等客户端连接，运行 `sql/` 下的查询。
@@ -43,9 +43,12 @@ docker-compose up spider
 
 | 文件 | 说明 |
 |---|---|
+| `run_all.sh` | 一键运行：启动数据库 → 爬取 → 拆表 → 检查，任一步失败即停止 |
 | `spider.py` | 爬虫：抓取片名、评分、年份、国家、类型、导演，写入 `movie` 表 |
 | `split_tables.py` | 把 `movie` 拆分为规范化的表，导演按中英文名判重合并 |
+| `check.py` | 数据质量检查（7 项），任一项不通过时返回非 0 |
 | `run_split.sh` | 加载 `.env` 后运行拆表脚本 |
+| `run_check.sh` | 加载 `.env` 后运行检查脚本 |
 | `schema.sql` | 规范化表的结构（不含 `movie`，其结构由 `spider.py` 定义） |
 | `dump_schema.sh` | 从数据库重新导出 `schema.sql` |
 | `sql/` | 分析与推荐查询（01～07） |
