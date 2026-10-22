@@ -3,3 +3,5 @@ test_parse.py
 *.swp
 .git
 venv/
+fonts/
+analysis/

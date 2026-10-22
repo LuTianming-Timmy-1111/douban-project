@@ -1,0 +1,4 @@
+pandas==3.0.6
+matplotlib==3.11.2
+pymysql==1.2.3
+sqlalchemy==2.1.6

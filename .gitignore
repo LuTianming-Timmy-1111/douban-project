@@ -4,3 +4,5 @@ test_parse.py
 __pycache__/
 test_director.py
 venv/
+fonts/
+analysis/output/
